@@ -7,6 +7,7 @@
 #include <csp/csp.h>
 #include <csp/drivers/usart.h>
 #include <csp/drivers/can_socketcan.h>
+#include <csp/interfaces/csp_if_udp.h>
 #include <csp/interfaces/csp_if_zmqhub.h>
 
 
@@ -31,6 +32,8 @@ enum DeviceType {
 	DEVICE_KISS,
 	DEVICE_ZMQ,
 };
+
+extern csp_conf_t csp_conf;
 
 #define __maybe_unused __attribute__((__unused__))
 
@@ -184,6 +187,9 @@ int main(int argc, char * argv[]) {
 	csp_iface_t * default_iface;
     int opt;
 
+	/* Use CSP version 1 */
+	csp_conf.version = 1;
+
 	while ((opt = getopt_long(argc, argv, OPTION_c OPTION_z OPTION_R "k:a:tT:h", long_options, NULL)) != -1) {
         switch (opt) {
             case 'c':
@@ -240,6 +246,20 @@ int main(int argc, char * argv[]) {
 
     /* Add interface(s) */
 	default_iface = add_interface(device_type, device_name);
+
+	/* Add UDP interface */
+	char udp_host[] = "localhost";
+	csp_iface_t *udp_iface = malloc(sizeof(csp_iface_t));
+	csp_if_udp_conf_t * udp_conf = malloc(sizeof(csp_if_udp_conf_t));
+
+	udp_iface->addr = 1;	/* Should be set in csp_if_udp_init() */
+	udp_iface->netmask = 2;	/* Should be set in csp_if_udp_init() */
+	udp_conf->host = udp_host;
+	udp_conf->lport = 1234;
+	udp_conf->rport = 52004;
+
+	csp_if_udp_init(udp_iface, udp_conf);
+	csp_rtable_set(10, udp_iface->netmask, udp_iface, CSP_NO_VIA_ADDRESS);
 
 	/* Setup routing table */
     if (CSP_USE_RTABLE) {
