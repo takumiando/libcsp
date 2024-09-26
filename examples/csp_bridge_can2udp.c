@@ -17,6 +17,8 @@
 /* These three functions must be provided in arch specific way */
 int bridge_start(void);
 
+extern csp_conf_t csp_conf;
+
 static struct option long_options[] = {
 	{"can", required_argument, 0, 'c'},
 	{"host", required_argument, 0, 'H'},
@@ -88,6 +90,9 @@ int main(int argc, char * argv[]) {
 	csp_iface_t * udp_iface;
 
 	int opt;
+
+	/* Use CSP version 1 */
+	csp_conf.version = 1;
 
 	while ((opt = getopt_long(argc, argv, "c:H:l:r:h", long_options, NULL)) != -1) {
 		switch (opt) {
