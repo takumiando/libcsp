@@ -1,4 +1,5 @@
 #include <csp/csp_debug.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -9,6 +10,7 @@
 #include <csp/drivers/can_socketcan.h>
 #include <csp/interfaces/csp_if_zmqhub.h>
 
+extern csp_conf_t csp_conf;
 
 /* These three functions must be provided in arch specific way */
 int router_start(void);
@@ -64,7 +66,8 @@ void server(void) {
 			switch (csp_conn_dport(conn)) {
 			case SERVER_PORT:
 				/* Process packet here */
-				csp_print("Packet received on SERVER_PORT: %s\n", (char *) packet->data);
+				csp_print("%u:%s\n", packet->id.src, (char *) packet->data);
+				fflush(stdout);
 				csp_buffer_free(packet);
 				++server_received;
 				break;
@@ -183,6 +186,8 @@ int main(int argc, char * argv[]) {
 	const char * rtable __maybe_unused = NULL;
 	csp_iface_t * default_iface;
     int opt;
+
+	csp_conf.version = 1;
 
 	while ((opt = getopt_long(argc, argv, OPTION_c OPTION_z OPTION_R "k:a:tT:h", long_options, NULL)) != -1) {
         switch (opt) {

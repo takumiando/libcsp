@@ -10,6 +10,7 @@
 #include <csp/drivers/can_socketcan.h>
 #include <csp/interfaces/csp_if_zmqhub.h>
 
+extern csp_conf_t csp_conf;
 
 /* This function must be provided in arch specific way */
 int router_start(void);
@@ -135,9 +136,10 @@ int main(int argc, char * argv[]) {
 	const char * rtable __maybe_unused = NULL;
 	csp_iface_t * default_iface;
 	struct timespec start_time;
-	unsigned int count;
 	int ret = EXIT_SUCCESS;
     int opt;
+
+	csp_conf.version = 1;
 
 	while ((opt = getopt_long(argc, argv, OPTION_c OPTION_z OPTION_R "k:a:C:tT:h", long_options, NULL)) != -1) {
         switch (opt) {
@@ -226,24 +228,17 @@ int main(int argc, char * argv[]) {
     /* Start client work */
 	csp_print("Client started\n");
 	clock_gettime(CLOCK_MONOTONIC, &start_time);
-	count = 'A';
+
+	char long_msg[255];
+	for (int i = 0; i < 255; i++) {
+		long_msg[i] = 'A' + i % 26;
+	}
+	long_msg[254] = 0;
 
 	while (1) {
 		struct timespec current_time;
 
-		usleep(test_mode ? 200000 : 1000000);
-
-		/* Send ping to server, timeout 1000 mS, ping size 100 bytes */
-		int result = csp_ping(server_address, 1000, 100, CSP_O_NONE);
-		csp_print("Ping address: %u, result %d [mS]\n", server_address, result);
-        // Increment successful_ping if ping was successful
-        if (result >= 0) {
-            ++successful_ping;
-        }
-
-		/* Send reboot request to server, the server has no actual implementation of csp_sys_reboot() and fails to reboot */
-		csp_reboot(server_address);
-		csp_print("reboot system request sent to address: %u\n", server_address);
+		usleep(test_mode ? 200000 : 10000);
 
 		/* Send data packet (string) to server */
 
@@ -266,10 +261,7 @@ int main(int argc, char * argv[]) {
 		}
 
 		/* 3. Copy data to packet */
-		memcpy(packet->data, "Hello world ", 12);
-		memcpy(packet->data + 12, &count, 1);
-		memset(packet->data + 13, 0, 1);
-		count++;
+		memcpy(packet->data, long_msg, strlen(long_msg) + 1);
 
 		/* 4. Set packet length */
 		packet->length = (strlen((char *) packet->data) + 1); /* include the 0 termination */

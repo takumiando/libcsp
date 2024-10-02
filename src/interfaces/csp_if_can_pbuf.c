@@ -4,6 +4,7 @@
 
 #include <csp/csp_buffer.h>
 #include <csp/csp_error.h>
+#include <csp/csp_debug.h>
 #include <csp/arch/csp_time.h>
 #include <csp/interfaces/csp_if_can.h>
 
@@ -76,6 +77,7 @@ void csp_can_pbuf_cleanup(csp_can_interface_data_t * ifdata, int * task_woken) {
 
 		/* Perform cleanup in used pbufs */
 		if (now - packet->last_used > PBUF_TIMEOUT_MS) {
+			csp_print("pbuf is cleaned up: last_used: %u, now: %u\n", packet->last_used, now);
 
 			/* Erase from list prev->next = next */
 			if (prev) {
