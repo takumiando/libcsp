@@ -91,8 +91,6 @@ int csp_can1_rx(csp_iface_t * iface, uint32_t id, const uint8_t * data, uint8_t 
 			memcpy(packet->frame_begin, data, sizeof(uint32_t));
 			packet->frame_length += sizeof(uint32_t);
 
-			csp_id_strip(packet);
-
 			/* Copy CSP length (of data) */
 			memcpy(&(packet->length), data + sizeof(uint32_t), sizeof(packet->length));
 			packet->length = be16toh(packet->length);
@@ -143,6 +141,9 @@ int csp_can1_rx(csp_iface_t * iface, uint32_t id, const uint8_t * data, uint8_t 
 			/* Check if more data is expected */
 			if (packet->rx_count != packet->length)
 				break;
+
+			/* Parse CSP header into csp_id type */
+			csp_id_strip(packet);
 
 			/* Rewrite incoming L2 broadcast to local node */
 			if (packet->id.dst == 0x1F) {
